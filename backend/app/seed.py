@@ -651,5 +651,28 @@ SEED_ROWS: dict[str, list[dict[str, Any]]] = {
   '已付金额': 37.5,
   '审核人员': '费用结算样例3',
   '付款日期': '2026-09-03',
-  '结算状态': '费用结算样例3'}]
+  '结算状态': '费用结算样例3'}],
+    # 能源计量台账（v1 口径：峰 08:00-12:00、17:00-21:00；谷 23:00-次日07:00；其余为平段）
+    "energy_points": [
+        {"id": 1, "code": "EP-001", "name": "厂区总表", "location": "1号配电室", "upper_limit": 100000.0},
+        {"id": 2, "code": "EP-002", "name": "锅炉车间分表", "location": "锅炉车间", "upper_limit": 50000.0},
+        {"id": 3, "code": "EP-003", "name": "空压站分表", "location": "空压站", "upper_limit": 20000.0},
+    ],
+    "energy_policy": [
+        {"version": 1, "updated_at": "2026-08-01", "periods": [
+            {"period": "峰", "ranges": [["08:00", "12:00"], ["17:00", "21:00"]]},
+            {"period": "谷", "ranges": [["23:00", "24:00"], ["00:00", "07:00"]]},
+        ], "is_current": True, "remark": "初始峰谷口径"},
+    ],
+    # usage 为 None 表示采集器未回传数据，不能按零值统计
+    "energy_records": [
+        {"id": 1, "point_id": 1, "date": "2026-09-20", "time": "10:30", "usage": 128.5, "policy_version": 1, "period": "峰", "created_at": "2026-09-20T11:00:00"},
+        {"id": 2, "point_id": 1, "date": "2026-09-20", "time": "14:00", "usage": 96.0, "policy_version": 1, "period": "平", "created_at": "2026-09-20T14:30:00"},
+        {"id": 3, "point_id": 1, "date": "2026-09-20", "time": "23:30", "usage": 64.25, "policy_version": 1, "period": "谷", "created_at": "2026-09-20T23:45:00"},
+        {"id": 4, "point_id": 2, "date": "2026-09-20", "time": "09:15", "usage": 210.0, "policy_version": 1, "period": "峰", "created_at": "2026-09-20T09:30:00"},
+        {"id": 5, "point_id": 2, "date": "2026-09-20", "time": "02:10", "usage": 75.5, "policy_version": 1, "period": "谷", "created_at": "2026-09-20T02:30:00"},
+        {"id": 6, "point_id": 3, "date": "2026-09-20", "time": "18:40", "usage": None, "policy_version": 1, "period": "峰", "created_at": "2026-09-20T19:00:00"},
+        {"id": 7, "point_id": 3, "date": "2026-09-20", "time": "13:00", "usage": 42.0, "policy_version": 1, "period": "平", "created_at": "2026-09-20T13:20:00"},
+    ],
+    "energy_snapshots": [],
 }

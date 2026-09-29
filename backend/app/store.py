@@ -8,6 +8,9 @@ from typing import Any
 
 from app.seed import SEED_ROWS
 
+# 能源计量台账自用的表，不参与通用业务模块的运营概览统计
+INTERNAL_TABLES = {"energy_points", "energy_policy", "energy_records", "energy_snapshots"}
+
 
 class Store:
     def __init__(self) -> None:
@@ -30,6 +33,8 @@ class Store:
     def overview(self) -> dict[str, object]:
         modules: list[dict[str, object]] = []
         for name in self.module_names():
+            if name in INTERNAL_TABLES:
+                continue
             rows = self.rows(name)
             modules.append({
                 "name": name,
@@ -43,7 +48,23 @@ class Store:
             {"label": "待处理", "value": sum(int(item["pending"]) for item in modules)},
             {"label": "异常量", "value": sum(int(item["abnormal"]) for item in modules)},
         ]
-        return {"cards": cards, "modules": modules}
+        # 能源用电总量与台账条数直接取自能源台账的统一聚合，
+        # 补录后运营概览跟着重算，且与首页、点位详情永远是同一份结果
+        from app.services.energy import energy_service
+
+        energy_overview = energy_service.build_overview()
+        cards.append({"label": "用电总量(kWh)", "value": energy_overview["total"]})
+        cards.append({"label": "能源台账条数", "value": energy_overview["record_count"]})
+        energy_modules = [
+            {
+                "name": summary["point_name"],
+                "created": summary["record_count"],
+                "pending": 0,
+                "abnormal": summary["missing_count"],
+            }
+            for summary in energy_overview["point_summaries"]
+        ]
+        return {"cards": cards, "modules": modules, "energy": energy_overview, "energy_modules": energy_modules}
 
 
 store = Store()
