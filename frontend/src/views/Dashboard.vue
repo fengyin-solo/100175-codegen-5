@@ -12,6 +12,12 @@
         <strong class="stat-value">{{ card.value }}</strong>
       </article>
     </div>
+    <div class="stat-row">
+      <article v-for="card in electricityCards" :key="card.label" class="stat-card electricity-card">
+        <span class="stat-label">{{ card.label }}</span>
+        <strong class="stat-value">{{ card.value }}</strong>
+      </article>
+    </div>
     <table class="data-table">
       <thead>
         <tr><th>业务模块</th><th>今日新增</th><th>待处理</th><th>异常量</th></tr>
@@ -29,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { fetchJson } from '@/api/client'
 
@@ -38,8 +44,30 @@ type Overview = {
   modules: { name: string; created: number; pending: number; abnormal: number }[]
 }
 
+type Electricity = {
+  汇总: {
+    峰电量: number
+    谷电量: number
+    平电量: number
+    总电量: number
+    台账条数: number
+    点位数: number
+    采集点位数: number
+    口径版本: number
+  }
+}
+
 const cards = ref<Overview['cards']>([])
 const moduleRows = ref<Overview['modules']>([])
+const electricity = ref<Electricity['汇总'] | null>(null)
+
+const electricityCards = computed(() => [
+  { label: '用电总量(kWh)', value: electricity.value?.总电量 ?? '—' },
+  { label: '峰电量(kWh)', value: electricity.value?.峰电量 ?? '—' },
+  { label: '谷电量(kWh)', value: electricity.value?.谷电量 ?? '—' },
+  { label: '台账条数', value: electricity.value?.台账条数 ?? '—' },
+  { label: '采集点位/点位总数', value: electricity.value ? `${electricity.value.采集点位数}/${electricity.value.点位数}` : '—' },
+])
 
 onMounted(async () => {
   try {
@@ -50,5 +78,15 @@ onMounted(async () => {
     cards.value = [{"label": "业务模块", "value": 0}, {"label": "今日新增", "value": 0}]
     moduleRows.value = [{"name": "锅炉设备", "created": 0, "pending": 0, "abnormal": 0}, {"name": "压力容器", "created": 0, "pending": 0, "abnormal": 0}, {"name": "压力管道", "created": 0, "pending": 0, "abnormal": 0}, {"name": "起重机械", "created": 0, "pending": 0, "abnormal": 0}, {"name": "电梯设备", "created": 0, "pending": 0, "abnormal": 0}, {"name": "场内机动车辆", "created": 0, "pending": 0, "abnormal": 0}, {"name": "点检计划", "created": 0, "pending": 0, "abnormal": 0}, {"name": "点检记录", "created": 0, "pending": 0, "abnormal": 0}, {"name": "润滑保养", "created": 0, "pending": 0, "abnormal": 0}, {"name": "定期检验", "created": 0, "pending": 0, "abnormal": 0}, {"name": "检验报告", "created": 0, "pending": 0, "abnormal": 0}, {"name": "隐患登记", "created": 0, "pending": 0, "abnormal": 0}, {"name": "整改闭环", "created": 0, "pending": 0, "abnormal": 0}, {"name": "使用登记", "created": 0, "pending": 0, "abnormal": 0}, {"name": "作业人员", "created": 0, "pending": 0, "abnormal": 0}, {"name": "备件器材", "created": 0, "pending": 0, "abnormal": 0}, {"name": "维保合同", "created": 0, "pending": 0, "abnormal": 0}, {"name": "费用结算", "created": 0, "pending": 0, "abnormal": 0}]
   }
+  try {
+    const payload = await fetchJson<Electricity>('/api/energy/overview')
+    electricity.value = payload.汇总
+  } catch {
+    electricity.value = null
+  }
 })
 </script>
+
+<style scoped>
+.electricity-card { border-color: #bcd0f5; background: #f4f8ff; }
+</style>
